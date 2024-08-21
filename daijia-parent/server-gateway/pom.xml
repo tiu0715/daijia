@@ -15,6 +15,7 @@
 	<name>server-gateway</name>
 
 	<dependencies>
+
 		<dependency>
 			<groupId>com.atguigu.daijia</groupId>
 			<artifactId>common-util</artifactId>
