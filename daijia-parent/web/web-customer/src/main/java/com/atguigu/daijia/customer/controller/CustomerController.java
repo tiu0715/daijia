@@ -1,7 +1,9 @@
 package com.atguigu.daijia.customer.controller;
 
 import com.atguigu.daijia.common.constant.RedisConstant;
+import com.atguigu.daijia.common.login.Login;
 import com.atguigu.daijia.common.result.Result;
+import com.atguigu.daijia.common.util.AuthContextHolder;
 import com.atguigu.daijia.customer.service.CustomerService;
 import com.atguigu.daijia.model.vo.customer.CustomerLoginVo;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,9 +33,10 @@ public class CustomerController {
 
     @Operation(summary = "获取客户登录信息")
     @GetMapping("/getCustomerLoginInfo")
-    public Result<CustomerLoginVo> getCustomerLoginInfo(@RequestHeader(value="token") String token) {
-        String customerId = (String)redisTemplate.opsForValue().get(RedisConstant.USER_LOGIN_KEY_PREFIX+token);
-        return Result.ok(customerInfoService.getCustomerLoginInfo(Long.parseLong(customerId)));
+    @Login
+    public Result<CustomerLoginVo> getCustomerLoginInfo() {
+        Long customerId = AuthContextHolder.getUserId();
+        return Result.ok(customerInfoService.getCustomerLoginInfo(customerId));
     }
 
 
