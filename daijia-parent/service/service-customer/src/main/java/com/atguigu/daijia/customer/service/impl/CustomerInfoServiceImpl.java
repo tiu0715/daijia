@@ -69,7 +69,7 @@ public class CustomerInfoServiceImpl extends ServiceImpl<CustomerInfoMapper, Cus
         //3.第一次登录注册
         if(customerInfo==null){
             customerInfo=new CustomerInfo();
-            customerInfo.setNickname(String.valueOf(System.currentTimeMillis()));
+            customerInfo.setNickname("乘客"+String.valueOf(System.currentTimeMillis()));
             customerInfo.setAvatarUrl(defaultProperties.getAvatarUrl());
             customerInfo.setWxOpenId(openId);
             customerInfo.setPhone(defaultProperties.getPhone());
