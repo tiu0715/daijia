@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class CustomerServiceImpl implements CustomerService {
     @Autowired
-    private CustomerInfoFeignClient client;
+    private CustomerInfoFeignClient customerInfoFeignClient;
     @Autowired
     private RedisTemplate redisTemplate;
 
@@ -33,7 +33,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public String login(String code) {
         //1.code进行远程调用，返回id
-        Result<Long> login = client.login(code);
+        Result<Long> login = customerInfoFeignClient.login(code);
         //2.返回失败，返回错误提示
         Integer codeResult = login.getCode();
         if(codeResult!=200){
@@ -66,7 +66,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public CustomerLoginVo getCustomerLoginInfo(long customerId) {
         //远程调用
-        Result<CustomerLoginVo> result = client.getCustomerLoginInfo(customerId);
+        Result<CustomerLoginVo> result = customerInfoFeignClient.getCustomerLoginInfo(customerId);
         //异常处理
         if(result.getCode().intValue() != 200) {
             throw new GuiguException(result.getCode(), result.getMessage());
@@ -80,7 +80,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public Boolean updateWxPhoneNumber(UpdateWxPhoneForm updateWxPhoneForm) {
-        client.updateWxPhoneNumber(updateWxPhoneForm);
+        customerInfoFeignClient.updateWxPhoneNumber(updateWxPhoneForm);
         return true;
     }
 

@@ -4,6 +4,8 @@ import cn.binarywang.wx.miniapp.api.WxMaService;
 import cn.binarywang.wx.miniapp.bean.WxMaJscode2SessionResult;
 import cn.binarywang.wx.miniapp.bean.WxMaPhoneNumberInfo;
 import com.alibaba.fastjson.JSON;
+import com.atguigu.daijia.common.execption.GuiguException;
+import com.atguigu.daijia.common.result.ResultCodeEnum;
 import com.atguigu.daijia.customer.config.DefaultProperties;
 import com.atguigu.daijia.customer.mapper.CustomerInfoMapper;
 import com.atguigu.daijia.customer.mapper.CustomerLoginLogMapper;
@@ -52,9 +54,11 @@ public class CustomerInfoServiceImpl extends ServiceImpl<CustomerInfoMapper, Cus
         try {
             WxMaJscode2SessionResult sessionInfo = wxMaService.getUserService().getSessionInfo(code);
             openId=sessionInfo.getOpenid();
-        } catch (WxErrorException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new GuiguException(ResultCodeEnum.DATA_ERROR);
         }
+
 
         //2.根据openid查询是否第一次登录
         //不存在返回null，存在会返回一条记录
