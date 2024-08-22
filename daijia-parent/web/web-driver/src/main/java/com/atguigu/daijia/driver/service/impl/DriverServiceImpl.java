@@ -5,6 +5,7 @@ import com.atguigu.daijia.common.execption.GuiguException;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
 import com.atguigu.daijia.driver.client.DriverInfoFeignClient;
 import com.atguigu.daijia.driver.service.DriverService;
+import com.atguigu.daijia.model.form.driver.UpdateDriverAuthInfoForm;
 import com.atguigu.daijia.model.vo.driver.DriverAuthInfoVo;
 import com.atguigu.daijia.model.vo.driver.DriverLoginVo;
 import lombok.SneakyThrows;
@@ -59,6 +60,16 @@ public class DriverServiceImpl implements DriverService {
     @Override
     public DriverAuthInfoVo getDriverAuthInfo(Long driverId) {
         return driverInfoFeignClient.getDriverAuthInfo(driverId).getData();
+    }
+
+    /**
+     * 更新司机身份信息
+     * @param updateDriverAuthInfoForm
+     * @return
+     */
+    @Override
+    public Boolean updateDriverAuthInfo(UpdateDriverAuthInfoForm updateDriverAuthInfoForm) {
+        return driverInfoFeignClient.UpdateDriverAuthInfo(updateDriverAuthInfoForm).getData();
     }
 
 }
