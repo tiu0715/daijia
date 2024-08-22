@@ -10,6 +10,7 @@ import com.atguigu.daijia.driver.mapper.DriverAccountMapper;
 import com.atguigu.daijia.driver.mapper.DriverInfoMapper;
 import com.atguigu.daijia.driver.mapper.DriverLoginLogMapper;
 import com.atguigu.daijia.driver.mapper.DriverSetMapper;
+import com.atguigu.daijia.driver.service.CosService;
 import com.atguigu.daijia.driver.service.DriverInfoService;
 import com.atguigu.daijia.model.entity.customer.CustomerInfo;
 import com.atguigu.daijia.model.entity.customer.CustomerLoginLog;
@@ -17,6 +18,7 @@ import com.atguigu.daijia.model.entity.driver.DriverAccount;
 import com.atguigu.daijia.model.entity.driver.DriverInfo;
 import com.atguigu.daijia.model.entity.driver.DriverLoginLog;
 import com.atguigu.daijia.model.entity.driver.DriverSet;
+import com.atguigu.daijia.model.vo.driver.DriverAuthInfoVo;
 import com.atguigu.daijia.model.vo.driver.DriverLoginVo;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -53,6 +55,9 @@ public class DriverInfoServiceImpl extends ServiceImpl<DriverInfoMapper, DriverI
 
     @Autowired
     private DefaultProperties defaultProperties;
+
+    @Autowired
+    private CosService cosService;
 
     /**
      * 司机登录
@@ -120,4 +125,28 @@ public class DriverInfoServiceImpl extends ServiceImpl<DriverInfoMapper, DriverI
         driverLoginVo.setIsArchiveFace(isArchiveFace);
         return driverLoginVo;
     }
+
+
+    /**
+     * 司机身份认证信息获取
+     * @param driverId
+     * @return
+     */
+    @Override
+    public DriverAuthInfoVo getDriverAuthInfo(Long driverId) {
+        DriverInfo driverInfo = this.getById(driverId);
+        DriverAuthInfoVo driverAuthInfoVo = new DriverAuthInfoVo();
+        BeanUtils.copyProperties(driverInfo, driverAuthInfoVo);
+        driverAuthInfoVo.setIdcardBackShowUrl(cosService.getImageUrl(driverAuthInfoVo.getIdcardBackUrl()));
+        driverAuthInfoVo.setIdcardFrontShowUrl(cosService.getImageUrl(driverAuthInfoVo.getIdcardFrontUrl()));
+        driverAuthInfoVo.setIdcardHandShowUrl(cosService.getImageUrl(driverAuthInfoVo.getIdcardHandUrl()));
+        driverAuthInfoVo.setDriverLicenseFrontShowUrl(cosService.getImageUrl(driverAuthInfoVo.getDriverLicenseFrontUrl()));
+        driverAuthInfoVo.setDriverLicenseBackShowUrl(cosService.getImageUrl(driverAuthInfoVo.getDriverLicenseBackUrl()));
+        driverAuthInfoVo.setDriverLicenseHandShowUrl(cosService.getImageUrl(driverAuthInfoVo.getDriverLicenseHandUrl()));
+        return driverAuthInfoVo;
+    }
+
+
+
+
 }
