@@ -69,6 +69,7 @@ public class DriverInfoServiceImpl extends ServiceImpl<DriverInfoMapper, DriverI
     @Autowired
     private TencentCloudProperties tencentCloudProperties;
 
+
     /**
      * 司机登录
      * @param code
@@ -227,9 +228,17 @@ public class DriverInfoServiceImpl extends ServiceImpl<DriverInfoMapper, DriverI
         return true;
     }
 
-
-
-
+    /**
+     * 获取司机设置信息
+     * @param driverId
+     * @return
+     */
+    @Override
+    public DriverSet getDriverSet(Long driverId) {
+        LambdaQueryWrapper<DriverSet> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DriverSet::getDriverId, driverId);
+        return driverSetMapper.selectOne(queryWrapper);
+    }
 
 
 }
