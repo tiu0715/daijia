@@ -1,3 +1,3 @@
 "use strict";
-const QqMapkey = "Z3VBZ-WHRKH-ROBD4-WD63L-DF6JE-COBIO";
+const QqMapkey = "5XQBZ-AXBCT-2GOXH-LWUQZ-4NYC3-ITFP4";
 exports.QqMapkey = QqMapkey;

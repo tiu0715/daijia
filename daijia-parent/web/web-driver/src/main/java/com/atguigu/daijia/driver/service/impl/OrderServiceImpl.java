@@ -10,6 +10,18 @@ import org.springframework.stereotype.Service;
 @Service
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class OrderServiceImpl implements OrderService {
+    @Autowired
+    private OrderInfoFeignClient orderInfoFeignClient;
+
+    /**
+     * 查询订单信息
+     * @param orderId
+     * @return
+     */
+    @Override
+    public Integer getOrderStatus(Long orderId) {
+        return orderInfoFeignClient.getOrderStatus(orderId).getData();
+    }
 
 
 }
