@@ -234,4 +234,6 @@ public class JobInfoController {
 		JobTriggerPoolHelper.trigger(id, TriggerTypeEnum.MANUAL, -1, null, jobInfo.getExecutorParam(), "");
 		return result;
 	}
+
+
 }
