@@ -83,4 +83,24 @@ public class DriverServiceImpl implements DriverService {
         return driverInfoFeignClient.creatDriverFaceModel(driverFaceModelForm).getData();
     }
 
+    /**
+     * 司机是否进行人脸识别
+     * @param driverId
+     * @return
+     */
+    @Override
+    public Boolean isFaceRecognition(Long driverId) {
+        return driverInfoFeignClient.isFaceRecognition(driverId).getData();
+    }
+
+    /**
+     * 司机人脸识别
+     * @param driverFaceModelForm
+     * @return
+     */
+    @Override
+    public Boolean verifyDriverFace(DriverFaceModelForm driverFaceModelForm) {
+        return driverInfoFeignClient.verifyDriverFace(driverFaceModelForm).getData();
+    }
+
 }
