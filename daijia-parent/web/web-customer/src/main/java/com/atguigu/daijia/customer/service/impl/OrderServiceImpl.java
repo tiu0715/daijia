@@ -1,6 +1,7 @@
 package com.atguigu.daijia.customer.service.impl;
 
 import com.atguigu.daijia.customer.service.OrderService;
+import com.atguigu.daijia.dispatch.client.NewOrderFeignClient;
 import com.atguigu.daijia.map.client.MapFeignClient;
 import com.atguigu.daijia.model.form.customer.ExpectOrderForm;
 import com.atguigu.daijia.model.form.customer.SubmitOrderForm;
@@ -8,6 +9,7 @@ import com.atguigu.daijia.model.form.map.CalculateDrivingLineForm;
 import com.atguigu.daijia.model.form.order.OrderInfoForm;
 import com.atguigu.daijia.model.form.rules.FeeRuleRequestForm;
 import com.atguigu.daijia.model.vo.customer.ExpectOrderVo;
+import com.atguigu.daijia.model.vo.dispatch.NewOrderTaskVo;
 import com.atguigu.daijia.model.vo.map.DrivingLineVo;
 import com.atguigu.daijia.model.vo.rules.FeeRuleResponseVo;
 import com.atguigu.daijia.order.client.OrderInfoFeignClient;
@@ -32,6 +34,15 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private OrderInfoFeignClient orderInfoFeignClient;
 
+    @Autowired
+    private NewOrderFeignClient newOrderFeignClient;
+
+    /**
+     *
+     * 预计订单信息
+     * @param expectOrderForm
+     * @return
+     */
     @Override
     public ExpectOrderVo expectOrder(ExpectOrderForm expectOrderForm) {
         //计算驾驶线路
@@ -52,6 +63,12 @@ public class OrderServiceImpl implements OrderService {
         expectOrderVo.setFeeRuleResponseVo(feeRuleResponseVo);
         return expectOrderVo;
     }
+
+    /**
+     * 用户下单任务调度
+     * @param submitOrderForm
+     * @return
+     */
     @Override
     public Long submitOrder(SubmitOrderForm submitOrderForm) {
         //1.重新计算驾驶线路
@@ -77,7 +94,24 @@ public class OrderServiceImpl implements OrderService {
         //4.保存订单信息
         Long orderId = orderInfoFeignClient.saveOrderInfo(orderInfoForm).getData();
 
-        //TODO 启动任务调度
+        //5.添加并执行任务调度，每分钟执行一次，搜索附近司机
+        //5.1.封装调度参数对象
+        NewOrderTaskVo newOrderDispatchVo = new NewOrderTaskVo();
+        newOrderDispatchVo.setOrderId(orderId);
+        newOrderDispatchVo.setStartLocation(orderInfoForm.getStartLocation());
+        newOrderDispatchVo.setStartPointLongitude(orderInfoForm.getStartPointLongitude());
+        newOrderDispatchVo.setStartPointLatitude(orderInfoForm.getStartPointLatitude());
+        newOrderDispatchVo.setEndLocation(orderInfoForm.getEndLocation());
+        newOrderDispatchVo.setEndPointLongitude(orderInfoForm.getEndPointLongitude());
+        newOrderDispatchVo.setEndPointLatitude(orderInfoForm.getEndPointLatitude());
+        newOrderDispatchVo.setExpectAmount(orderInfoForm.getExpectAmount());
+        newOrderDispatchVo.setExpectDistance(orderInfoForm.getExpectDistance());
+        newOrderDispatchVo.setExpectTime(drivingLineVo.getDuration());
+        newOrderDispatchVo.setFavourFee(orderInfoForm.getFavourFee());
+        newOrderDispatchVo.setCreateTime(new Date());
+        //5.2.添加并执行任务调度
+        Long jobId = newOrderFeignClient.addAndStartTask(newOrderDispatchVo).getData();
+        log.info("订单id为： {}，绑定任务id为：{}", orderId, jobId);
 
         return orderId;
     }
