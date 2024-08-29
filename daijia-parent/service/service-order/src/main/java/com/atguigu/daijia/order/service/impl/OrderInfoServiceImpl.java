@@ -1,5 +1,8 @@
 package com.atguigu.daijia.order.service.impl;
 
+import com.atguigu.daijia.common.constant.RedisConstant;
+import com.atguigu.daijia.common.execption.GuiguException;
+import com.atguigu.daijia.common.result.ResultCodeEnum;
 import com.atguigu.daijia.model.entity.order.OrderInfo;
 import com.atguigu.daijia.model.entity.order.OrderStatusLog;
 import com.atguigu.daijia.model.enums.OrderStatus;
@@ -9,13 +12,18 @@ import com.atguigu.daijia.order.mapper.OrderStatusLogMapper;
 import com.atguigu.daijia.order.service.OrderInfoService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @SuppressWarnings({"unchecked", "rawtypes"})
@@ -26,6 +34,12 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
 
     @Autowired
     private OrderStatusLogMapper orderStatusLogMapper;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    @Autowired
+    private RedissonClient redissonClient;
 
     /**
      * 保存订单信息
@@ -74,6 +88,70 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
             return OrderStatus.NULL_ORDER.getStatus();
         }
         return orderInfo.getStatus();
+    }
+
+    /**
+     * 司机抢单
+     * @param driverId
+     * @param orderId
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean robNewOrder(Long driverId, Long orderId) {
+        //抢单成功或取消订单，都会删除该key，redis判断，减少数据库压力
+        if(!redisTemplate.hasKey(RedisConstant.ORDER_ACCEPT_MARK)) {
+            //抢单失败
+            throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+        }
+
+        // 初始化分布式锁，创建一个RLock实例
+        RLock lock = redissonClient.getLock(RedisConstant.ROB_NEW_ORDER_LOCK + orderId);
+        try {
+            /**
+             * TryLock是一种非阻塞式的分布式锁，实现原理：Redis的SETNX命令
+             * 参数：
+             *     waitTime：等待获取锁的时间
+             *     leaseTime：加锁的时间
+             */
+            boolean flag = lock.tryLock(RedisConstant.ROB_NEW_ORDER_LOCK_WAIT_TIME,RedisConstant.ROB_NEW_ORDER_LOCK_LEASE_TIME, TimeUnit.SECONDS);
+            //获取到锁
+            if (flag){
+                //二次判断，防止重复抢单
+                if(!redisTemplate.hasKey(RedisConstant.ORDER_ACCEPT_MARK)) {
+                    //抢单失败
+                    throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+                }
+
+                //修改订单状态
+                //update order_info set status = 2, driver_id = #{driverId} where id = #{id}
+                //修改字段
+                OrderInfo orderInfo = new OrderInfo();
+                orderInfo.setId(orderId);
+                orderInfo.setStatus(OrderStatus.ACCEPTED.getStatus());
+                orderInfo.setAcceptTime(new Date());
+                orderInfo.setDriverId(driverId);
+                int rows = orderInfoMapper.updateById(orderInfo);
+                if(rows != 1) {
+                    //抢单失败
+                    throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+                }
+
+                //记录日志
+                this.log(orderId, orderInfo.getStatus());
+
+                //删除redis订单标识
+                redisTemplate.delete(RedisConstant.ORDER_ACCEPT_MARK);
+            }
+        } catch (InterruptedException e) {
+            //抢单失败
+            throw new GuiguException(ResultCodeEnum.COB_NEW_ORDER_FAIL);
+        } finally {
+            if(lock.isLocked()) {
+                lock.unlock();
+            }
+        }
+        return true;
     }
 
 

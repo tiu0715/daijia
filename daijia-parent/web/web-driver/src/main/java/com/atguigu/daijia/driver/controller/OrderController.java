@@ -50,6 +50,13 @@ public class OrderController {
     }
 
 
+    @Operation(summary = "司机抢单")
+    @Login
+    @GetMapping("/robNewOrder/{orderId}")
+    public Result<Boolean> robNewOrder(@PathVariable Long orderId) {
+        Long driverId = AuthContextHolder.getUserId();
+        return Result.ok(orderService.robNewOrder(driverId, orderId));
+    }
 
 
 }
