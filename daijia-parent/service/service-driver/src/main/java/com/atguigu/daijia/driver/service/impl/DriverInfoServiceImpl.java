@@ -338,6 +338,23 @@ public class DriverInfoServiceImpl extends ServiceImpl<DriverInfoMapper, DriverI
         return false;
     }
 
+    /**
+     * 更新司机进入接单状态
+     * @param driverId
+     * @param status
+     * @return
+     */
+    @Transactional
+    @Override
+    public Boolean updateServiceStatus(Long driverId, Integer status) {
+        LambdaQueryWrapper<DriverSet> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DriverSet::getDriverId, driverId);
+        DriverSet driverSet = new DriverSet();
+        driverSet.setServiceStatus(status);
+        driverSetMapper.update(driverSet, queryWrapper);
+        return true;
+    }
+
 
 
 }
