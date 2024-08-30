@@ -7,6 +7,7 @@ import com.atguigu.daijia.model.entity.order.OrderInfo;
 import com.atguigu.daijia.model.entity.order.OrderStatusLog;
 import com.atguigu.daijia.model.enums.OrderStatus;
 import com.atguigu.daijia.model.form.order.OrderInfoForm;
+import com.atguigu.daijia.model.form.order.UpdateOrderCartForm;
 import com.atguigu.daijia.model.vo.order.CurrentOrderInfoVo;
 import com.atguigu.daijia.order.mapper.OrderInfoMapper;
 import com.atguigu.daijia.order.mapper.OrderStatusLogMapper;
@@ -220,5 +221,57 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
         return currentOrderInfoVo;
     }
 
+    /**
+     * 司机到达上车地点
+     * @param orderId
+     * @param driverId
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean driverArriveStartLocation(Long orderId, Long driverId) {
+        LambdaQueryWrapper<OrderInfo> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(OrderInfo::getId, orderId);
+        queryWrapper.eq(OrderInfo::getDriverId, driverId);
+
+        OrderInfo updateOrderInfo = new OrderInfo();
+        updateOrderInfo.setStatus(OrderStatus.DRIVER_ARRIVED.getStatus());
+        updateOrderInfo.setArriveTime(new Date());
+        //只能更新自己的订单
+        int row = orderInfoMapper.update(updateOrderInfo, queryWrapper);
+        if(row == 1) {
+            //记录日志
+            this.log(orderId, OrderStatus.DRIVER_ARRIVED.getStatus());
+        } else {
+            throw new GuiguException(ResultCodeEnum.UPDATE_ERROR);
+        }
+        return true;
+    }
+
+    /**
+     * 司机更新车辆信息
+     * @param updateOrderCartForm
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean updateOrderCart(UpdateOrderCartForm updateOrderCartForm) {
+        LambdaQueryWrapper<OrderInfo> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(OrderInfo::getId, updateOrderCartForm.getOrderId());
+        queryWrapper.eq(OrderInfo::getDriverId, updateOrderCartForm.getDriverId());
+
+        OrderInfo updateOrderInfo = new OrderInfo();
+        BeanUtils.copyProperties(updateOrderCartForm, updateOrderInfo);
+        updateOrderInfo.setStatus(OrderStatus.UPDATE_CART_INFO.getStatus());
+        //只能更新自己的订单
+        int row = orderInfoMapper.update(updateOrderInfo, queryWrapper);
+        if(row == 1) {
+            //记录日志
+            this.log(updateOrderCartForm.getOrderId(), OrderStatus.UPDATE_CART_INFO.getStatus());
+        } else {
+            throw new GuiguException(ResultCodeEnum.UPDATE_ERROR);
+        }
+        return true;
+    }
 
 }
