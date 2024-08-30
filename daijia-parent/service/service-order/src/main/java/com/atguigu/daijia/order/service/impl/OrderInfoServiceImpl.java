@@ -47,21 +47,21 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
      * @param orderInfoForm
      * @return
      */
+    @Transactional(rollbackFor = {Exception.class})
     @Override
     public Long saveOrderInfo(OrderInfoForm orderInfoForm) {
         OrderInfo orderInfo = new OrderInfo();
-        BeanUtils.copyProperties(orderInfoForm,orderInfo);
-
-        //订单号
-        String orderNo = UUID.randomUUID().toString().replaceAll("-", "");
-        orderInfo.setOrderNo(orderNo);
-        //订单状态
+        BeanUtils.copyProperties(orderInfoForm, orderInfo);
+        String orderNo = UUID.randomUUID().toString().replaceAll("-","");
         orderInfo.setStatus(OrderStatus.WAITING_ACCEPT.getStatus());
-
+        orderInfo.setOrderNo(orderNo);
         orderInfoMapper.insert(orderInfo);
+
         //记录日志
-        this.log(orderInfo.getId(),orderInfo.getStatus());
-        //返回订单id
+        this.log(orderInfo.getId(), orderInfo.getStatus());
+
+        //接单标识，标识不存在了说明不在等待接单状态了
+        redisTemplate.opsForValue().set(RedisConstant.ORDER_ACCEPT_MARK, "0", RedisConstant.ORDER_ACCEPT_MARK_EXPIRES_TIME, TimeUnit.MINUTES);
         return orderInfo.getId();
     }
     //订单状态日志添加
