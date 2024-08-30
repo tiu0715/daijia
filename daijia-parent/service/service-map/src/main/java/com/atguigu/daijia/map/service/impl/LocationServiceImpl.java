@@ -62,7 +62,7 @@ public class LocationServiceImpl implements LocationService {
         //定义经纬度点
         Point point = new Point(searchNearByDriverForm.getLongitude().doubleValue(), searchNearByDriverForm.getLatitude().doubleValue());
         //定义距离：5公里(系统配置)
-        Distance distance = new Distance(SystemConstant.NEARBY_DRIVER_RADIUS, RedisGeoCommands.DistanceUnit.KILOMETERS);
+        Distance distance = new Distance(SystemConstant.NEARBY_DRIVER_RADIUS*2, RedisGeoCommands.DistanceUnit.KILOMETERS);
         //定义以point点为中心，distance为距离这么一个范围
         Circle circle = new Circle(point, distance);
 
