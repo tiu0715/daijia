@@ -4,6 +4,8 @@ import com.atguigu.daijia.common.execption.GuiguException;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
 import com.atguigu.daijia.customer.service.OrderService;
 import com.atguigu.daijia.dispatch.client.NewOrderFeignClient;
+import com.atguigu.daijia.driver.client.DriverInfoFeignClient;
+import com.atguigu.daijia.map.client.LocationFeignClient;
 import com.atguigu.daijia.map.client.MapFeignClient;
 import com.atguigu.daijia.model.entity.order.OrderInfo;
 import com.atguigu.daijia.model.form.customer.ExpectOrderForm;
@@ -13,7 +15,9 @@ import com.atguigu.daijia.model.form.order.OrderInfoForm;
 import com.atguigu.daijia.model.form.rules.FeeRuleRequestForm;
 import com.atguigu.daijia.model.vo.customer.ExpectOrderVo;
 import com.atguigu.daijia.model.vo.dispatch.NewOrderTaskVo;
+import com.atguigu.daijia.model.vo.driver.DriverInfoVo;
 import com.atguigu.daijia.model.vo.map.DrivingLineVo;
+import com.atguigu.daijia.model.vo.map.OrderLocationVo;
 import com.atguigu.daijia.model.vo.order.CurrentOrderInfoVo;
 import com.atguigu.daijia.model.vo.order.OrderInfoVo;
 import com.atguigu.daijia.model.vo.rules.FeeRuleResponseVo;
@@ -41,6 +45,12 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private NewOrderFeignClient newOrderFeignClient;
+
+    @Autowired
+    private DriverInfoFeignClient driverInfoFeignClient;
+
+    @Autowired
+    private LocationFeignClient locationFeignClient;
 
     /**
      * 查找乘客当前订单
@@ -153,6 +163,41 @@ public class OrderServiceImpl implements OrderService {
         orderInfoVo.setOrderId(orderId);
         BeanUtils.copyProperties(orderInfo, orderInfoVo);
         return orderInfoVo;
+    }
+
+    /**
+     * 获取司机基本信息
+     * @param orderId
+     * @param customerId
+     * @return
+     */
+    @Override
+    public DriverInfoVo getDriverInfo(Long orderId, Long customerId) {
+        OrderInfo orderInfo = orderInfoFeignClient.getOrderInfo(orderId).getData();
+        if (orderInfo.getCustomerId().longValue() != customerId.longValue()) {
+            throw new GuiguException(ResultCodeEnum.ILLEGAL_REQUEST);
+        }
+        return driverInfoFeignClient.getDriverInfo(orderInfo.getDriverId()).getData();
+    }
+
+    /**
+     * 获取订单经纬度位置
+     * @param orderId
+     * @return
+     */
+    @Override
+    public OrderLocationVo getCacheOrderLocation(Long orderId) {
+        return locationFeignClient.getCacheOrderLocation(orderId).getData();
+    }
+
+    /**
+     * 计算最佳路线
+     * @param calculateDrivingLineForm
+     * @return
+     */
+    @Override
+    public DrivingLineVo calculateDrivingLine(CalculateDrivingLineForm calculateDrivingLineForm) {
+        return mapFeignClient.calculateDrivingLine(calculateDrivingLineForm).getData();
     }
 
 }
