@@ -1,7 +1,10 @@
 package com.atguigu.daijia.driver.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import com.atguigu.daijia.common.execption.GuiguException;
+import com.atguigu.daijia.common.result.ResultCodeEnum;
 import com.atguigu.daijia.driver.config.TencentCloudProperties;
+import com.atguigu.daijia.driver.service.CiService;
 import com.atguigu.daijia.driver.service.CosService;
 import com.atguigu.daijia.model.vo.driver.CosUploadVo;
 import com.qcloud.cos.COSClient;
@@ -32,6 +35,8 @@ public class CosServiceImpl implements CosService {
 
     @Autowired
     private TencentCloudProperties tencentCloudProperties;
+    @Autowired
+    private CiService ciService;
 
     private COSClient getPrivateCOSClient() {
         //1.身份信息
@@ -46,6 +51,13 @@ public class CosServiceImpl implements CosService {
     /**
      * https://console.cloud.tencent.com/cos
      * https://cloud.tencent.com/document/product/436/10199
+     * @param file
+     * @param path
+     * @return
+     */
+
+    /**
+     * 增加图片适审核的上传接口
      * @param file
      * @param path
      * @return
@@ -70,11 +82,19 @@ public class CosServiceImpl implements CosService {
         log.info(JSON.toJSONString(putObjectResult));
         cosClient.shutdown();
 
+        //审核图片
+        Boolean isAuditing = ciService.imageAuditing(uploadPath);
+        if(!isAuditing) {
+            //删除违规图片
+            cosClient.deleteObject(tencentCloudProperties.getBucketPrivate(), uploadPath);
+            throw new GuiguException(ResultCodeEnum.IMAGE_AUDITION_FAIL);
+        }
+
         //封装返回对象
         CosUploadVo cosUploadVo = new CosUploadVo();
-        cosUploadVo.setUrl(uploadPath);
-        //图片临时访问url，回显使用
-        cosUploadVo.setShowUrl(this.getImageUrl(uploadPath));
+        cosUploadVo.setUrl(path);
+        //图片临时访问url
+        cosUploadVo.setShowUrl(this.getImageUrl(path));
         return cosUploadVo;
     }
 
