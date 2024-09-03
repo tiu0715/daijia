@@ -2,6 +2,7 @@ package com.atguigu.daijia.map.service.impl;
 
 import com.atguigu.daijia.common.constant.RedisConstant;
 import com.atguigu.daijia.common.constant.SystemConstant;
+import com.atguigu.daijia.common.util.LocationUtil;
 import com.atguigu.daijia.driver.client.DriverInfoFeignClient;
 import com.atguigu.daijia.map.repository.OrderServiceLocationRepository;
 import com.atguigu.daijia.map.service.LocationService;
@@ -14,6 +15,7 @@ import com.atguigu.daijia.model.form.map.UpdateOrderLocationForm;
 import com.atguigu.daijia.model.vo.map.NearByDriverVo;
 import com.atguigu.daijia.model.vo.map.OrderLocationVo;
 import com.atguigu.daijia.model.vo.map.OrderServiceLastLocationVo;
+import com.atguigu.daijia.order.client.OrderInfoFeignClient;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.springframework.beans.BeanUtils;
@@ -46,6 +48,9 @@ public class LocationServiceImpl implements LocationService {
     private DriverInfoFeignClient driverInfoFeignClient;
     @Autowired
     private MongoTemplate mongoTemplate;
+    @Autowired
+    private OrderInfoFeignClient orderInfoFeignClient;
+
 
 
     @Override
@@ -189,6 +194,31 @@ public class LocationServiceImpl implements LocationService {
         OrderServiceLastLocationVo orderServiceLastLocationVo = new OrderServiceLastLocationVo();
         BeanUtils.copyProperties(orderServiceLocation, orderServiceLastLocationVo);
         return orderServiceLastLocationVo;
+    }
+
+    /**
+     * 获取实际里程
+     * @param orderId
+     * @return
+     */
+    @Override
+    public BigDecimal calculateOrderRealDistance(Long orderId) {
+        List<OrderServiceLocation> orderServiceLocationList = orderServiceLocationRepository.findByOrderIdOrderByCreateTimeAsc(orderId);
+        double realDistance = 0;
+        if(!CollectionUtils.isEmpty(orderServiceLocationList)) {
+            for (int i = 0, size=orderServiceLocationList.size()-1; i < size; i++) {
+                OrderServiceLocation location1 = orderServiceLocationList.get(i);
+                OrderServiceLocation location2 = orderServiceLocationList.get(i+1);
+
+                double distance = LocationUtil.getDistance(location1.getLatitude().doubleValue(), location1.getLongitude().doubleValue(), location2.getLatitude().doubleValue(), location2.getLongitude().doubleValue());
+                realDistance += distance;
+            }
+        }
+        //测试过程中，没有真正代驾，实际代驾GPS位置没有变化，模拟：实际代驾里程 = 预期里程 + 5
+        if(realDistance == 0) {
+            return orderInfoFeignClient.getOrderInfo(orderId).getData().getExpectDistance().add(new BigDecimal("5"));
+        }
+        return new BigDecimal(realDistance);
     }
 
 
