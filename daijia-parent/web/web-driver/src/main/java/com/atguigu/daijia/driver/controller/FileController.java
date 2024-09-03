@@ -17,18 +17,12 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileController {
 
     @Autowired
-    private CosService cosService;
+    private FileService fileService;
 
-    //文件接口上传
-    @Operation(summary = "上传")
-    @Login
-    @PostMapping("/upload")
-    public Result<String> upload(@RequestPart("file") MultipartFile file,
-                                      @RequestParam(name = "path",defaultValue = "auth")String path){
-        CosUploadVo cosUploadVo=cosService.uploadFile(file,path);
-        String showUrl = cosUploadVo.getShowUrl();
-        return Result.ok(showUrl);
-
+    @Operation(summary = "Minio文件上传")
+    @PostMapping("upload")
+    public Result<String> upload(@RequestPart("file") MultipartFile file) {
+        return Result.ok(fileService.upload(file));
     }
 
 
