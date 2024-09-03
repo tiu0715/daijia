@@ -95,14 +95,7 @@ public class OrderController {
     public Result<OrderServiceLastLocationVo> getOrderServiceLastLocation(@PathVariable Long orderId) {
         return Result.ok(orderService.getOrderServiceLastLocation(orderId));
     }
-    @Operation(summary = "结束代驾服务更新订单账单")
-    @Login
-    @PostMapping("/endDrive")
-    public Result<Boolean> endDrive(@RequestBody OrderFeeForm orderFeeForm) {
-        Long driverId = AuthContextHolder.getUserId();
-        orderFeeForm.setDriverId(driverId);
-        return Result.ok(orderService.endDrive(orderFeeForm));
-    }
+
 
 
 
