@@ -7,6 +7,7 @@ import com.atguigu.daijia.customer.service.OrderService;
 import com.atguigu.daijia.model.form.customer.ExpectOrderForm;
 import com.atguigu.daijia.model.form.customer.SubmitOrderForm;
 import com.atguigu.daijia.model.form.map.CalculateDrivingLineForm;
+import com.atguigu.daijia.model.form.order.OrderFeeForm;
 import com.atguigu.daijia.model.form.order.StartDriveForm;
 import com.atguigu.daijia.model.vo.customer.ExpectOrderVo;
 import com.atguigu.daijia.model.vo.driver.DriverInfoVo;
@@ -29,6 +30,9 @@ import org.springframework.web.bind.annotation.*;
 public class OrderController {
 
 
+    @Autowired
+    private OrderService orderService;
+
     @Operation(summary = "乘客端查找当前订单")
     @Login
     @GetMapping("/searchCustomerCurrentOrder")
@@ -36,9 +40,6 @@ public class OrderController {
         Long customerId = AuthContextHolder.getUserId();
         return Result.ok(orderService.searchCustomerCurrentOrder(customerId));
     }
-
-    @Autowired
-    private OrderService orderService;
 
     @Operation(summary = "预估订单数据")
     @Login
@@ -93,6 +94,14 @@ public class OrderController {
     @GetMapping("/getOrderServiceLastLocation/{orderId}")
     public Result<OrderServiceLastLocationVo> getOrderServiceLastLocation(@PathVariable Long orderId) {
         return Result.ok(orderService.getOrderServiceLastLocation(orderId));
+    }
+    @Operation(summary = "结束代驾服务更新订单账单")
+    @Login
+    @PostMapping("/endDrive")
+    public Result<Boolean> endDrive(@RequestBody OrderFeeForm orderFeeForm) {
+        Long driverId = AuthContextHolder.getUserId();
+        orderFeeForm.setDriverId(driverId);
+        return Result.ok(orderService.endDrive(orderFeeForm));
     }
 
 
