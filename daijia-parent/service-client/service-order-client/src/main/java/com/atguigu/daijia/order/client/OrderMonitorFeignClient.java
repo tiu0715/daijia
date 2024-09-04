@@ -18,6 +18,7 @@ public interface OrderMonitorFeignClient {
      * @param orderMonitorRecord
      * @return
      */
+
     @PostMapping("/order/monitor/saveOrderMonitorRecord")
     Result<Boolean> saveMonitorRecord(@RequestBody OrderMonitorRecord orderMonitorRecord);
     /**

@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class DroolsConfig {
     // 制定规则文件的路径
-    private static final String RULES_CUSTOMER_RULES_DRL = "rules/FeeRule.drl";
+    /*private static final String RULES_CUSTOMER_RULES_DRL = "rules/FeeRule.drl";
 
     @Bean
     public KieContainer kieContainer() {
@@ -28,5 +28,5 @@ public class DroolsConfig {
         KieModule kieModule = kb.getKieModule();
         KieContainer kieContainer = kieServices.newKieContainer(kieModule.getReleaseId());
         return kieContainer;
-    }
+    }*/
 }

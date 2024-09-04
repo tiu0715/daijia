@@ -10,7 +10,7 @@ import org.kie.api.runtime.KieSession;
 import org.kie.internal.io.ResourceFactory;
 
 public class DroolsHelper {
-    private static final String RULES_CUSTOMER_RULES_DRL = "rules/FeeRule.drl";
+
 
     public static KieSession loadForRule(String drlStr) {
         KieServices kieServices = KieServices.Factory.get();
@@ -26,7 +26,7 @@ public class DroolsHelper {
         KieContainer kieContainer = kieServices.newKieContainer(kieModule.getReleaseId());
         return kieContainer.newKieSession();
     }
-}
+
 
    /* public static KieSession loadForRule(String drlStr) {
         KieServices kieServices = KieServices.Factory.get();
@@ -45,4 +45,4 @@ public class DroolsHelper {
         KieContainer kieContainer = kieServices.newKieContainer(kieServices.getRepository().getDefaultReleaseId());
         return kieContainer.newKieSession();
     }*/
-
+}

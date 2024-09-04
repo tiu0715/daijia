@@ -23,11 +23,11 @@ import org.springframework.stereotype.Service;
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class FeeRuleServiceImpl implements FeeRuleService {
 
-    /*@Autowired
-    private FeeRuleMapper feeRuleMapper;*/
-
     @Autowired
-    private KieContainer kieContainer;
+    private FeeRuleMapper feeRuleMapper;
+
+    /*@Autowired
+    private KieContainer kieContainer;*/
 
     @Override
     public FeeRuleResponseVo calculateOrderFee(FeeRuleRequestForm feeRuleRequestForm) {
@@ -40,10 +40,10 @@ public class FeeRuleServiceImpl implements FeeRuleService {
 
         //获取最新订单费用规则
         //从数据库写入drl文件
-        /*FeeRule feeRule = feeRuleMapper.selectOne(new LambdaQueryWrapper<FeeRule>().orderByDesc(FeeRule::getId).last("limit 1"));
-        KieSession kieSession = DroolsHelper.loadForRule(feeRule.getRule());*/
+        FeeRule feeRule = feeRuleMapper.selectOne(new LambdaQueryWrapper<FeeRule>().orderByDesc(FeeRule::getId).last("limit 1"));
+        KieSession kieSession = DroolsHelper.loadForRule(feeRule.getRule());
 
-        KieSession kieSession = kieContainer.newKieSession();
+        //KieSession kieSession = kieContainer.newKieSession();
 
 
         //封装返回对象
@@ -59,7 +59,7 @@ public class FeeRuleServiceImpl implements FeeRuleService {
 
         //封装返回对象
         FeeRuleResponseVo feeRuleResponseVo = new FeeRuleResponseVo();
-        //feeRuleResponseVo.setFeeRuleId(feeRule.getId());
+        feeRuleResponseVo.setFeeRuleId(feeRule.getId());
         BeanUtils.copyProperties(feeRuleResponse, feeRuleResponseVo);
         return feeRuleResponseVo;
     }

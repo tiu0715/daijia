@@ -16,8 +16,9 @@ public class OrderMonitorServiceImpl extends ServiceImpl<OrderMonitorMapper, Ord
     /**
      * 保存订单监控记录数据
      */
-    @Autowired
-    private OrderMonitorRecordRepository orderMonitorRecordRepository;
+    // todo 订单监控记录
+    /*@Autowired
+    private OrderMonitorRecordRepository orderMonitorRecordRepository;*/
     @Autowired
     private OrderMonitorMapper orderMonitorMapper;
 
@@ -39,7 +40,7 @@ public class OrderMonitorServiceImpl extends ServiceImpl<OrderMonitorMapper, Ord
 
     @Override
     public Boolean saveOrderMonitorRecord(OrderMonitorRecord orderMonitorRecord) {
-        orderMonitorRecordRepository.save(orderMonitorRecord);
+        //orderMonitorRecordRepository.save(orderMonitorRecord);
         return true;
     }
 }
