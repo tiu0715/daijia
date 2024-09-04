@@ -45,4 +45,4 @@ public class DroolsHelper {
         KieContainer kieContainer = kieServices.newKieContainer(kieServices.getRepository().getDefaultReleaseId());
         return kieContainer.newKieSession();
     }*/
-}
+

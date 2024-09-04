@@ -50,6 +50,8 @@ public class LocationServiceImpl implements LocationService {
     private MongoTemplate mongoTemplate;
     @Autowired
     private OrderInfoFeignClient orderInfoFeignClient;
+    @Autowired
+    private OrderServiceLocationRepository orderServiceLocationRepository;
 
 
 
@@ -160,8 +162,7 @@ public class LocationServiceImpl implements LocationService {
     /**
      * 开始代驾服务，保存司机实时位置
      */
-    @Autowired
-    private OrderServiceLocationRepository orderServiceLocationRepository;
+
 
     @Override
     public Boolean saveOrderServiceLocation(List<OrderServiceLocationForm> orderLocationServiceFormList) {
