@@ -12,4 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class MqController {
 
 
+    @Autowired
+    private RabbitService rabbitService;
+
+
+
 }

@@ -1,15 +1,20 @@
 package com.atguigu.daijia.order.service.impl;
 
+import com.atguigu.daijia.common.constant.MqConst;
 import com.atguigu.daijia.common.constant.RedisConstant;
+import com.atguigu.daijia.common.constant.SystemConstant;
 import com.atguigu.daijia.common.execption.GuiguException;
 import com.atguigu.daijia.common.result.ResultCodeEnum;
+import com.atguigu.daijia.common.service.RabbitService;
 import com.atguigu.daijia.model.entity.order.*;
 import com.atguigu.daijia.model.enums.OrderStatus;
 import com.atguigu.daijia.model.form.order.OrderInfoForm;
 import com.atguigu.daijia.model.form.order.StartDriveForm;
 import com.atguigu.daijia.model.form.order.UpdateOrderBillForm;
 import com.atguigu.daijia.model.form.order.UpdateOrderCartForm;
+import com.atguigu.daijia.model.vo.base.PageVo;
 import com.atguigu.daijia.model.vo.order.CurrentOrderInfoVo;
+import com.atguigu.daijia.model.vo.order.OrderListVo;
 import com.atguigu.daijia.order.mapper.OrderBillMapper;
 import com.atguigu.daijia.order.mapper.OrderInfoMapper;
 import com.atguigu.daijia.order.mapper.OrderProfitsharingMapper;
@@ -17,6 +22,8 @@ import com.atguigu.daijia.order.mapper.OrderStatusLogMapper;
 import com.atguigu.daijia.order.service.OrderInfoService;
 import com.atguigu.daijia.order.service.OrderMonitorService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -56,6 +63,9 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
     @Autowired
     private OrderProfitsharingMapper orderProfitsharingMapper;
 
+    @Autowired
+    private RabbitService rabbitService;
+
 
     /**
      * 保存订单信息
@@ -77,6 +87,8 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
 
         //接单标识，标识不存在了说明不在等待接单状态了
         redisTemplate.opsForValue().set(RedisConstant.ORDER_ACCEPT_MARK, "0", RedisConstant.ORDER_ACCEPT_MARK_EXPIRES_TIME, TimeUnit.MINUTES);
+        //发送延迟消息，取消订单
+        rabbitService.sendDealyMessage(MqConst.EXCHANGE_CANCEL_ORDER, MqConst.ROUTING_CANCEL_ORDER, String.valueOf(orderInfo.getId()), SystemConstant.CANCEL_ORDER_DELAY_TIME);
         return orderInfo.getId();
     }
     //订单状态日志添加
@@ -378,6 +390,55 @@ public class OrderInfoServiceImpl extends ServiceImpl<OrderInfoMapper, OrderInfo
             throw new GuiguException(ResultCodeEnum.UPDATE_ERROR);
         }
         return true;
+    }
+
+    /**
+     * 接收消息
+     * @param orderId
+     */
+    @Transactional
+    @Override
+    public void systemCancelOrder(Long orderId) {
+        Integer orderStatus = this.getOrderStatus(orderId);
+        if(null != orderStatus && orderStatus.intValue() == OrderStatus.WAITING_ACCEPT.getStatus().intValue()) {
+            //取消订单
+            OrderInfo orderInfo = new OrderInfo();
+            orderInfo.setId(orderId);
+            orderInfo.setStatus(OrderStatus.CANCEL_ORDER.getStatus());
+            int row = orderInfoMapper.updateById(orderInfo);
+            if(row == 1) {
+                //记录日志
+                this.log(orderInfo.getId(), orderInfo.getStatus());
+
+                //删除redis订单标识
+                redisTemplate.delete(RedisConstant.ORDER_ACCEPT_MARK);
+            } else {
+                throw new GuiguException(ResultCodeEnum.UPDATE_ERROR);
+            }
+        }
+    }
+
+    /**
+     * 乘客我的订单
+     * @param pageParam
+     * @param customerId
+     * @return
+     */
+    @Override
+    public PageVo findCustomerOrderPage(Page<OrderInfo> pageParam, Long customerId) {
+        IPage<OrderListVo> pageInfo = orderInfoMapper.selectCustomerOrderPage(pageParam, customerId);
+        return new PageVo(pageInfo.getRecords(), pageInfo.getPages(), pageInfo.getTotal());
+    }
+    /**
+     * 司机我的订单
+     * @param pageParam
+     * @param customerId
+     * @return
+     */
+    @Override
+    public PageVo findDriverOrderPage(Page<OrderInfo> pageParam, Long driverId) {
+        IPage<OrderListVo> pageInfo = orderInfoMapper.selectDriverOrderPage(pageParam, driverId);
+        return new PageVo(pageInfo.getRecords(), pageInfo.getPages(), pageInfo.getTotal());
     }
 
 }
