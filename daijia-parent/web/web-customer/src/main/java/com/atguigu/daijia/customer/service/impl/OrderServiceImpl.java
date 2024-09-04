@@ -171,22 +171,23 @@ public class OrderServiceImpl implements OrderService {
         return orderInfoFeignClient.getOrderStatus(orderId).getData();
     }
     @Override
-    public OrderInfoVo getOrderInfo(Long orderId, Long driverId) {
+    public OrderInfoVo getOrderInfo(Long orderId, Long customerId) {
         //订单信息
         OrderInfo orderInfo = orderInfoFeignClient.getOrderInfo(orderId).getData();
-        if(orderInfo.getDriverId().longValue() != driverId.longValue()) {
+        if (orderInfo.getCustomerId().longValue() != customerId.longValue()) {
             throw new GuiguException(ResultCodeEnum.ILLEGAL_REQUEST);
+        }
+
+        //获取司机信息
+        DriverInfoVo driverInfoVo = null;
+        if(null != orderInfo.getDriverId()) {
+            driverInfoVo = driverInfoFeignClient.getDriverInfo(orderInfo.getDriverId()).getData();
         }
 
         //账单信息
         OrderBillVo orderBillVo = null;
-        //分账信息
-        OrderProfitsharingVo orderProfitsharing = null;
-        if (orderInfo.getStatus().intValue() >= OrderStatus.END_SERVICE.getStatus().intValue()) {
+        if (orderInfo.getStatus().intValue() >= OrderStatus.UNPAID.getStatus().intValue()) {
             orderBillVo = orderInfoFeignClient.getOrderBillInfo(orderId).getData();
-
-            //获取分账信息
-            orderProfitsharing = orderInfoFeignClient.getOrderProfitsharing(orderId).getData();
         }
 
         //封装订单信息
@@ -194,7 +195,6 @@ public class OrderServiceImpl implements OrderService {
         orderInfoVo.setOrderId(orderId);
         BeanUtils.copyProperties(orderInfo, orderInfoVo);
         orderInfoVo.setOrderBillVo(orderBillVo);
-        orderInfoVo.setOrderProfitsharingVo(orderProfitsharing);
         return orderInfoVo;
     }
 
